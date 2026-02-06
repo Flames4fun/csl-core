@@ -2,6 +2,7 @@
 
 > **"Solidity for AI Policies"** — Deterministic safety for probabilistic AI systems
 
+[![PyPI version](https://badge.fury.io/py/csl-core.svg)](https://badge.fury.io/py/csl-core)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-green.svg)](https://github.com/Z3Prover/z3)
