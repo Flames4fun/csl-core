@@ -1,5 +1,5 @@
 """
-CSL-Core — LangChain Integration Plugin
+CSL-Core - LangChain Integration Plugin
 
 Uses the `ChimeraPlugin` architecture from base.py to provide safe,
 visualized, and policy-agnostic guarding for LangChain components.

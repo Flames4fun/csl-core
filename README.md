@@ -8,6 +8,8 @@
 [![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-green.svg)](https://github.com/Z3Prover/z3)
 [![Open-Core](https://img.shields.io/badge/Model-Open--Core-orange.svg)](https://en.wikipedia.org/wiki/Open-core_model)
 
+`Alpha (0.1.x). Interfaces may change. Use in production only with thorough testing.`
+
 **CSL-Core** (Chimera Specification Language) is an open-source policy language and runtime that brings **mathematical rigor** to AI agent governance. Define rigid, formally verified "laws" for your AI systems and enforce them at runtime with deterministic guarantees; completely independent of prompts, fine-tuning, or model training.
 
 ## 📖 Table of Contents
@@ -108,13 +110,13 @@ Modern AI is inherently probabilistic. While this enables creativity, it makes s
 ### 🔒 **Formal Verification (Z3)**
 Policies are mathematically proven consistent at compile-time. Contradictions, unreachable rules, and logic errors are caught before deployment.
 
-### ⚡ **Zero-Latency Runtime**
+### ⚡ **Low-Latency Runtime**
 Compiled policies execute as lightweight Python functors. No heavy parsing, no API calls — just pure deterministic evaluation.
 
 ### 🔌 **LangChain-First Integration**
 Drop-in protection for LangChain agents with **3 lines of code**:
 - **Context Injection**: Pass runtime context (user roles, environment) that the LLM cannot override
-- **Automatic Tool Mapping**: Tool names auto-injected into policy evaluation
+- **Optional via tool_field**: Tool names auto-injected into policy evaluation
 - **Custom Context Mappers**: Map complex LangChain inputs to policy variables
 - **Zero Boilerplate**: Wrap tools, chains, or entire agents with a single function call
 
@@ -140,8 +142,7 @@ Every decision produces an audit trail with:
 - Latency metrics
 - Optional Rich terminal visualization
 
-### 🧪 **Production-Ready**
-Battle-tested with comprehensive test suites:
+### 🧪 **Production Tests**
 - ✅ Smoke tests (parser, compiler)
 - ✅ Logic verification (Z3 engine integrity)
 - ✅ Runtime decisions (allow vs block)
@@ -281,7 +282,7 @@ cslcore simulate 01_hello_world.csl --input '{"amount": 500, "destination": "EXT
 
 ### 🟡 **Step 2: Real-World Examples** (30 minutes) → [`examples/`](examples/)
 
-Production-ready policies with comprehensive test coverage:
+Use-ready policies with comprehensive test coverage:
 
 ```bash
 cd examples/
@@ -368,7 +369,7 @@ CSL-Core separates **Policy Definition** from **Runtime Enforcement** through a 
 
 ## 🎓 Example Policies Deep Dive
 
-The [`examples/`](examples/) directory contains **production-ready policies** with comprehensive test suites. Each example demonstrates real-world patterns and includes:
+The [`examples/`](examples/) directory contains **policies** with comprehensive test suites. Each example demonstrates real-world patterns and includes:
 - ✅ Complete `.csl` policy file
 - ✅ JSON test cases (allow + block scenarios)
 - ✅ Automated test runner with visual reports
@@ -951,7 +952,7 @@ See [**CLI Reference**](docs/cli-reference.md) for complete documentation.
 
 ## 🎯 Use Cases
 
-CSL-Core is production-ready for:
+CSL-Core is ready for:
 
 ### 🏦 **Financial Services**
 - Transaction limits by user tier
@@ -1105,6 +1106,6 @@ If you find CSL-Core useful, please consider giving it a star on GitHub! It help
 
 ---
 
-**Built with ❤️ by the Chimera Team**
+**Built with ❤️ by the Chimera project**
 
 *Making AI systems mathematically safe, one policy at a time.*
