@@ -2,11 +2,13 @@
 
 > **"Solidity for AI Policies"** — Deterministic safety for probabilistic AI systems
 
-[![PyPI version](https://badge.fury.io/py/csl-core.svg)](https://badge.fury.io/py/csl-core)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-green.svg)](https://github.com/Z3Prover/z3)
+[![PyPI version](https://img.shields.io/pypi/v/csl-core?color=blue)](https://pypi.org/project/csl-core/)
+[![Downloads](https://img.shields.io/pypi/dm/csl-core?color=green&label=downloads)](https://pypi.org/project/csl-core/)
+[![Python](https://img.shields.io/pypi/pyversions/csl-core.svg)](https://pypi.org/project/csl-core/)
+[![License](https://img.shields.io/pypi/l/csl-core.svg)](LICENSE)
+[![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-purple.svg)](https://github.com/Z3Prover/z3)
 [![Open-Core](https://img.shields.io/badge/Model-Open--Core-orange.svg)](https://en.wikipedia.org/wiki/Open-core_model)
+
 
 `Alpha (0.1.x). Interfaces may change. Use in production only with thorough testing.`
 
