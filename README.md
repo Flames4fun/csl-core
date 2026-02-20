@@ -88,14 +88,16 @@ print(result.allowed)  # False
 
 ## Benchmark: Adversarial Attack Resistance
 
-We tested CSL-Core against 22 adversarial prompt injection attacks across 4 frontier LLMs:
+We tested prompt-based safety rules vs CSL-Core enforcement across 4 frontier LLMs with 22 adversarial attacks and 15 legitimate operations:
 
-| Model | Attacks | Blocked | Rate |
-|-------|---------|---------|------|
-| GPT-4.1 | 22 | 22 | **100%** |
-| GPT-4o | 22 | 22 | **100%** |
-| Claude Sonnet 4 | 22 | 22 | **100%** |
-| Gemini 2.0 Flash | 22 | 22 | **100%** |
+| Approach | Attacks Blocked | Bypass Rate | Legit Ops Passed | Latency |
+|----------|----------------|-------------|------------------|---------|
+| GPT-4.1 (prompt rules) | 10/22 (45%) | 55% | 15/15 (100%) | ~850ms |
+| GPT-4o (prompt rules) | 15/22 (68%) | 32% | 15/15 (100%) | ~620ms |
+| Claude Sonnet 4 (prompt rules) | 19/22 (86%) | 14% | 15/15 (100%) | ~480ms |
+| Gemini 2.0 Flash (prompt rules) | 11/22 (50%) | 50% | 15/15 (100%) | ~410ms |
+| **CSL-Core (deterministic)** | **22/22 (100%)** | **0%** | **15/15 (100%)** | **~0.84ms** |
+
 
 **Why 100%?** Enforcement happens outside the model. Prompt injection is irrelevant because there's nothing to inject against. Attack categories: direct instruction override, role-play jailbreaks, encoding tricks, multi-turn escalation, tool-name spoofing, and more.
 
