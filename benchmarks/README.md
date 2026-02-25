@@ -2,7 +2,7 @@
 
 Systematic evaluation of frontier LLMs as policy enforcement layers, with CSL-Core as a deterministic baseline.
 
-📄 **Full writeup:** [Medium article](https://medium.com/@aytugakarlar/TODO)
+📄 **Full writeup:** [Medium article](https://medium.com/@akarlaraytu/i-benchmarked-4-frontier-llms-as-security-guardrails-none-of-them-passed-8ee5131ad058)
 
 ## Results (v5 — February 2026)
 
