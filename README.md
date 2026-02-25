@@ -6,6 +6,10 @@
 [![License](https://img.shields.io/pypi/l/csl-core.svg)](LICENSE)
 [![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-purple.svg)](https://github.com/Z3Prover/z3)
 
+## ❤️ Our Contributors!
+
+[![Contributors](https://contrib.rocks/image?repo=Chimera-Protocol/csl-core)](https://github.com/Chimera-Protocol/csl-core/graphs/contributors)
+
 **CSL-Core** (Chimera Specification Language) is a deterministic safety layer for AI agents. Write rules in `.csl` files, verify them mathematically with Z3, enforce them at runtime — outside the model. The LLM never sees the rules. It simply cannot violate them.
 
 ```bash
