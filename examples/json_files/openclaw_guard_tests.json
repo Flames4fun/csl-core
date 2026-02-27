@@ -3,7 +3,7 @@
     {
       "name": "Embedded camera preview — safe read-only operation",
       "input": {
-        "tool": "CAMERA_PREVIEW",
+        "tool": "camera_preview",
         "sender_role": "OWNER",
         "deployment_mode": "EMBEDDED",
         "target_count": 0,
@@ -18,7 +18,7 @@
     {
       "name": "Owner file write outside workspace — with approval",
       "input": {
-        "tool": "FS_WRITE",
+        "tool": "write",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -33,7 +33,7 @@
     {
       "name": "Owner normal email — low count, no PII",
       "input": {
-        "tool": "GMAIL_SEND",
+        "tool": "gmail_send",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 3,
@@ -46,9 +46,9 @@
       }
     },
     {
-      "name": "Node run with sandbox — properly sandboxed",
+      "name": "Node exec with sandbox — properly sandboxed",
       "input": {
-        "tool": "NODE_RUN",
+        "tool": "node_exec",
         "sender_role": "OWNER",
         "deployment_mode": "SERVER",
         "target_count": 0,
@@ -63,7 +63,7 @@
     {
       "name": "Secrets write with approval — authorized rotation",
       "input": {
-        "tool": "SECRETS_WRITE",
+        "tool": "secrets_write",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -76,9 +76,9 @@
       }
     },
     {
-      "name": "Browser navigate allowlisted domain — normal browsing",
+      "name": "Navigate allowlisted domain — normal browsing",
       "input": {
-        "tool": "BROWSER_NAVIGATE",
+        "tool": "navigate",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -93,7 +93,7 @@
     {
       "name": "Verified skill install by OWNER — safe supply chain",
       "input": {
-        "tool": "SKILL_INSTALL",
+        "tool": "skill_install",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -108,7 +108,7 @@
     {
       "name": "Owner bulk delete on desktop with approval — legitimate cleanup",
       "input": {
-        "tool": "GMAIL_DELETE",
+        "tool": "gmail_delete",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 100,
@@ -121,9 +121,9 @@
       }
     },
     {
-      "name": "Safe workspace read — always allowed",
+      "name": "Safe workspace read by PAIRED — always allowed",
       "input": {
-        "tool": "FS_READ",
+        "tool": "read",
         "sender_role": "PAIRED",
         "deployment_mode": "SERVER",
         "target_count": 0,
@@ -136,11 +136,11 @@
       }
     },
     {
-      "name": "Unattended cron schedule — OWNER, permitted",
+      "name": "Owner cron on desktop — scheduled task allowed",
       "input": {
-        "tool": "CRON_SCHEDULE",
+        "tool": "cron",
         "sender_role": "OWNER",
-        "deployment_mode": "UNATTENDED",
+        "deployment_mode": "DESKTOP",
         "target_count": 0,
         "path_in_workspace": "YES",
         "domain_allowlisted": "YES",
@@ -153,10 +153,10 @@
   ],
   "block_cases": [
     {
-      "name": "Meta inbox wipe — PAIRED, bulk delete, unattended",
+      "name": "Meta inbox wipe — PAIRED bulk delete unattended",
       "expected_violation": "mass_delete_paired_blocked",
       "input": {
-        "tool": "GMAIL_DELETE",
+        "tool": "gmail_delete",
         "sender_role": "PAIRED",
         "deployment_mode": "UNATTENDED",
         "target_count": 80,
@@ -169,10 +169,10 @@
       }
     },
     {
-      "name": "Prompt injection exec — UNKNOWN sender",
-      "expected_violation": "untrusted_no_exec",
+      "name": "Prompt injection bash — UNKNOWN sender",
+      "expected_violation": "untrusted_no_bash",
       "input": {
-        "tool": "EXEC",
+        "tool": "bash",
         "sender_role": "UNKNOWN",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -188,7 +188,7 @@
       "name": "Malicious skill install — unverified, UNPAIRED",
       "expected_violation": "untrusted_no_skill_install",
       "input": {
-        "tool": "SKILL_INSTALL",
+        "tool": "skill_install",
         "sender_role": "UNPAIRED",
         "deployment_mode": "SERVER",
         "target_count": 0,
@@ -202,9 +202,9 @@
     },
     {
       "name": "PII email without approval — data leak",
-      "expected_violation": "pii_email_no_approval",
+      "expected_violation": "pii_gmail_no_approval",
       "input": {
-        "tool": "GMAIL_SEND",
+        "tool": "gmail_send",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 1,
@@ -217,10 +217,10 @@
       }
     },
     {
-      "name": "Embedded exec by OWNER — physical safety trumps role",
-      "expected_violation": "embedded_no_exec",
+      "name": "Embedded bash by OWNER — physical safety trumps role",
+      "expected_violation": "embedded_no_bash",
       "input": {
-        "tool": "EXEC",
+        "tool": "bash",
         "sender_role": "OWNER",
         "deployment_mode": "EMBEDDED",
         "target_count": 0,
@@ -233,10 +233,10 @@
       }
     },
     {
-      "name": "Node run without sandbox — remote exec safety",
-      "expected_violation": "node_run_no_sandbox",
+      "name": "Node exec without sandbox — remote exec safety",
+      "expected_violation": "node_exec_no_sandbox",
       "input": {
-        "tool": "NODE_RUN",
+        "tool": "node_exec",
         "sender_role": "OWNER",
         "deployment_mode": "SERVER",
         "target_count": 0,
@@ -252,7 +252,7 @@
       "name": "Secrets write without approval — credential theft",
       "expected_violation": "secrets_write_no_approval",
       "input": {
-        "tool": "SECRETS_WRITE",
+        "tool": "secrets_write",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -265,10 +265,10 @@
       }
     },
     {
-      "name": "Browser unknown domain — data exfiltration",
-      "expected_violation": "browser_unknown_no_approval",
+      "name": "Navigate unknown domain — data exfiltration",
+      "expected_violation": "navigate_unknown_no_approval",
       "input": {
-        "tool": "BROWSER_NAVIGATE",
+        "tool": "navigate",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -281,10 +281,10 @@
       }
     },
     {
-      "name": "PII to unknown domain via browser — exfiltration",
-      "expected_violation": "pii_browser_unknown_blocked",
+      "name": "PII to unknown domain via navigate — exfiltration",
+      "expected_violation": "pii_navigate_unknown_blocked",
       "input": {
-        "tool": "BROWSER_NAVIGATE",
+        "tool": "navigate",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
@@ -297,17 +297,97 @@
       }
     },
     {
-      "name": "rm -rf outside workspace — no sandbox",
-      "expected_violation": "delete_outside_no_sandbox",
+      "name": "Fetch unknown domain — network exfil prevention",
+      "expected_violation": "fetch_unknown_no_approval",
       "input": {
-        "tool": "FS_DELETE",
+        "tool": "fetch",
+        "sender_role": "OWNER",
+        "deployment_mode": "DESKTOP",
+        "target_count": 0,
+        "path_in_workspace": "YES",
+        "domain_allowlisted": "NO",
+        "skill_verified": "YES",
+        "approval_granted": "NO",
+        "sandbox_active": "NO",
+        "pii_present": "NO"
+      }
+    },
+    {
+      "name": "UNPAIRED sendMessage — trust boundary",
+      "expected_violation": "untrusted_no_sendMessage",
+      "input": {
+        "tool": "sendMessage",
+        "sender_role": "UNPAIRED",
+        "deployment_mode": "DESKTOP",
+        "target_count": 1,
+        "path_in_workspace": "YES",
+        "domain_allowlisted": "YES",
+        "skill_verified": "YES",
+        "approval_granted": "NO",
+        "sandbox_active": "NO",
+        "pii_present": "NO"
+      }
+    },
+    {
+      "name": "apply_patch outside workspace no approval",
+      "expected_violation": "patch_outside_no_approval",
+      "input": {
+        "tool": "apply_patch",
         "sender_role": "OWNER",
         "deployment_mode": "DESKTOP",
         "target_count": 0,
         "path_in_workspace": "NO",
         "domain_allowlisted": "YES",
         "skill_verified": "YES",
+        "approval_granted": "NO",
+        "sandbox_active": "NO",
+        "pii_present": "NO"
+      }
+    },
+    {
+      "name": "PII via fetch to unknown domain — hard block",
+      "expected_violation": "pii_fetch_unknown_blocked",
+      "input": {
+        "tool": "fetch",
+        "sender_role": "OWNER",
+        "deployment_mode": "DESKTOP",
+        "target_count": 0,
+        "path_in_workspace": "YES",
+        "domain_allowlisted": "NO",
+        "skill_verified": "YES",
         "approval_granted": "YES",
+        "sandbox_active": "NO",
+        "pii_present": "YES"
+      }
+    },
+    {
+      "name": "Download from unknown domain no approval",
+      "expected_violation": "download_unknown_no_approval",
+      "input": {
+        "tool": "download",
+        "sender_role": "OWNER",
+        "deployment_mode": "DESKTOP",
+        "target_count": 0,
+        "path_in_workspace": "YES",
+        "domain_allowlisted": "NO",
+        "skill_verified": "YES",
+        "approval_granted": "NO",
+        "sandbox_active": "NO",
+        "pii_present": "NO"
+      }
+    },
+    {
+      "name": "PAIRED tries skill_install — owner only",
+      "expected_violation": "skill_install_paired_blocked",
+      "input": {
+        "tool": "skill_install",
+        "sender_role": "PAIRED",
+        "deployment_mode": "DESKTOP",
+        "target_count": 0,
+        "path_in_workspace": "YES",
+        "domain_allowlisted": "YES",
+        "skill_verified": "YES",
+        "approval_granted": "NO",
         "sandbox_active": "NO",
         "pii_present": "NO"
       }
