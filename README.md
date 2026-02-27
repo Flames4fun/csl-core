@@ -1,7 +1,7 @@
 # CSL-Core
 
 [![PyPI version](https://img.shields.io/pypi/v/csl-core?color=blue)](https://pypi.org/project/csl-core/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/csl-core.svg?color=green&label=downloads)](https://pypi.org/project/csl-core/)
+[![PyPI Downloads](https://static.pepy.tech/badge/csl-core)](https://pepy.tech/project/csl-core)
 [![Python](https://img.shields.io/pypi/pyversions/csl-core.svg)](https://pypi.org/project/csl-core/)
 [![License](https://img.shields.io/pypi/l/csl-core.svg)](LICENSE)
 [![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-purple.svg)](https://github.com/Z3Prover/z3)
