@@ -65,7 +65,13 @@ POLICIES = {
         "type": "script", 
         "path": "integrations/langchain_agent_demo.py",
         "description": "Interactive LangChain Agent with visual dashboard"
+    },
+    "openclaw_guard": {
+        "policy": "openclaw_guard.csl",
+        "tests": "openclaw_guard_tests.json",
+        "description": "OpenClaw deterministic gatekeeper — RFC #26348 reference implementation"
     }
+    
 }
 
 
