@@ -1,0 +1,104 @@
+// =============================================================
+// CSL-Core: Financial Transaction Guard (v1.0.6)
+// Goal: Formalized RBAC with atomic constraints to solve Z3 mismatch
+// =============================================================
+
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  CHECK_LOGICAL_CONSISTENCY: TRUE
+  ENABLE_FORMAL_VERIFICATION: TRUE
+}
+
+DOMAIN FinancialTransactionGuard {
+
+  VARIABLES {
+    amount: 0..1000000
+    role: {"ADMIN", "MANAGER", "ANALYST", "INTERN", "EXTERNAL"}
+    action: {"TRANSFER", "WITHDRAW", "VIEW", "APPROVE", "REVERSE"}
+    risk_score: 0..100
+    destination: {"DOMESTIC", "INTERNATIONAL", "SANCTIONED", "CRYPTO"}
+    hour: 0..23
+    velocity: 0..50
+  }
+
+  // 1) Global Security: Strictly block sanctioned destinations
+  // Atomic rules for each forbidden action to prevent Sort Mismatch
+  STATE_CONSTRAINT sanction_no_transfer {
+    WHEN destination == "SANCTIONED"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  STATE_CONSTRAINT sanction_no_withdraw {
+    WHEN destination == "SANCTIONED"
+    THEN action MUST NOT BE "WITHDRAW"
+  }
+
+  // 2) Intern Restriction: Interns can ONLY perform VIEW actions.
+  STATE_CONSTRAINT intern_no_transfer {
+    WHEN role == "INTERN" AND action == "TRANSFER"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  STATE_CONSTRAINT intern_no_withdraw {
+    WHEN role == "INTERN" AND action == "WITHDRAW"
+    THEN action MUST NOT BE "WITHDRAW"
+  }
+
+  // 3) External Role Security
+  STATE_CONSTRAINT external_no_approve {
+    WHEN role == "EXTERNAL" AND action == "APPROVE"
+    THEN action MUST NOT BE "APPROVE"
+  }
+
+  STATE_CONSTRAINT external_no_reverse {
+    WHEN role == "EXTERNAL" AND action == "REVERSE"
+    THEN action MUST NOT BE "REVERSE"
+  }
+
+  // 4) High-Value Authority: Transfers over 50k are ADMIN-only
+  STATE_CONSTRAINT high_value_gate {
+    WHEN amount > 50000 AND action == "TRANSFER" AND role != "ADMIN"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  // 5) Mid-Value Intern Block
+  STATE_CONSTRAINT mid_value_intern_gate {
+    WHEN amount > 10000 AND action == "TRANSFER" AND role == "INTERN"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  // 6) Risk Shield
+  STATE_CONSTRAINT risk_no_transfer {
+    WHEN risk_score > 80 AND action == "TRANSFER"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  STATE_CONSTRAINT risk_no_withdraw {
+    WHEN risk_score > 80 AND action == "WITHDRAW"
+    THEN action MUST NOT BE "WITHDRAW"
+  }
+
+  // 7) International Compliance
+  STATE_CONSTRAINT international_gate {
+    WHEN destination == "INTERNATIONAL" AND amount > 25000 AND role != "ADMIN"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  // 8) Asset Safety
+  STATE_CONSTRAINT crypto_gate {
+    WHEN destination == "CRYPTO" AND amount > 10000 AND role != "ADMIN"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+
+  // 9) Temporal Control
+  STATE_CONSTRAINT off_hours_gate {
+    WHEN (hour >= 22 OR hour <= 5) AND amount > 5000 AND action == "WITHDRAW" AND role != "ADMIN"
+    THEN action MUST NOT BE "WITHDRAW"
+  }
+
+  // 10) Anti-Fraud
+  STATE_CONSTRAINT velocity_gate {
+    WHEN velocity > 20 AND action == "TRANSFER"
+    THEN action MUST NOT BE "TRANSFER"
+  }
+}

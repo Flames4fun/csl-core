@@ -1,0 +1,65 @@
+// =============================================================
+// CSL-Core: Content Moderation Engine (v1.0.1)
+// Goal: Conflict-free moderation logic for public and private feeds
+// =============================================================
+
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  CHECK_LOGICAL_CONSISTENCY: TRUE
+}
+
+DOMAIN ContentModeration {
+  VARIABLES {
+    toxicity_score: 0..100
+    user_age: 0..120
+    content_type: {"TEXT", "IMAGE", "VIDEO", "LINK", "EMBED"}
+    category: {"GENERAL", "VIOLENCE", "ADULT", "GAMBLING", "ALCOHOL", "DRUGS", "HATE_SPEECH"}
+    platform: {"PUBLIC_FEED", "DM", "GROUP", "PROFILE", "COMMENT"}
+    reporter_count: 0..1000
+    account_age: 0..3650
+  }
+
+  // 1) Zero Tolerance: Hate speech is globally forbidden across all platforms
+  STATE_CONSTRAINT global_hate_speech_ban {
+    ALWAYS True
+    THEN category MUST NOT BE "HATE_SPEECH"
+  }
+
+  // 2) Content Isolation: High toxicity automatically forces a GENERAL category 
+  // ONLY if the platform is not already blocked by other rules.
+  STATE_CONSTRAINT toxicity_category_control {
+    WHEN toxicity_score > 75 AND platform == "PUBLIC_FEED"
+    THEN category MUST BE "GENERAL"
+  }
+
+  // 3) Minor Protection: Multi-category restrictions for users under 18
+  STATE_CONSTRAINT minor_safety_shield {
+    WHEN user_age < 18
+    THEN (category MUST NOT BE "ADULT") AND (category MUST NOT BE "GAMBLING") AND (category MUST NOT BE "ALCOHOL") AND (category MUST NOT BE "DRUGS")
+  }
+
+  // 4) Platform Integrity: High report counts block public feed access
+  // Conflict Fix: Prioritize platform removal over category modification
+  STATE_CONSTRAINT report_threshold_gate {
+    WHEN reporter_count > 10 AND toxicity_score > 30
+    THEN platform MUST NOT BE "PUBLIC_FEED"
+  }
+
+  // 5) Comment Safety: Restrict violence in comment sections based on score
+  STATE_CONSTRAINT comment_violence_limit {
+    WHEN platform == "COMMENT" AND category == "VIOLENCE" AND toxicity_score > 40
+    THEN category MUST NOT BE "VIOLENCE"
+  }
+
+  // 6) Anti-Spam: Restrict visual media for new accounts on public feeds
+  STATE_CONSTRAINT new_account_media_limit {
+    WHEN account_age < 7 AND platform == "PUBLIC_FEED"
+    THEN content_type MUST NOT BE "VIDEO" AND content_type MUST NOT BE "IMAGE"
+  }
+
+  // 7) Age Gating: Gambling content is restricted to 21+ on public platforms
+  STATE_CONSTRAINT gambling_age_verification {
+    WHEN category == "GAMBLING" AND user_age < 21
+    THEN platform MUST NOT BE "PUBLIC_FEED"
+  }
+}

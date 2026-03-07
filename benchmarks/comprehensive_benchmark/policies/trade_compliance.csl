@@ -1,0 +1,65 @@
+// =============================================================
+// CSL-Core: Trade Compliance Guard (v1.0.1)
+// Goal: Conflict-free export controls and embargo enforcement
+// =============================================================
+
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  CHECK_LOGICAL_CONSISTENCY: TRUE
+  ENABLE_FORMAL_VERIFICATION: TRUE
+}
+
+DOMAIN TradeComplianceGuard {
+  VARIABLES {
+    item_category: {"CONSUMER", "DUAL_USE", "MILITARY", "TECHNOLOGY", "PHARMACEUTICAL", "AGRICULTURAL"}
+    destination_risk: {"LOW", "MEDIUM", "HIGH", "EMBARGOED"}
+    license_status: {"VALID", "EXPIRED", "NONE", "PENDING"}
+    value_usd: 0..10000000
+    end_user_verified: 0..1
+    origin: {"DOMESTIC", "ALLIED", "NEUTRAL", "ADVERSARY"}
+  }
+
+  // 1) Hard Embargo: Absolute block on sensitive items to embargoed regions
+  // Combined to prevent Z3 Core overlap
+  STATE_CONSTRAINT embargo_safety_net {
+    WHEN destination_risk == "EMBARGOED"
+    THEN item_category MUST NOT BE "MILITARY" AND item_category MUST NOT BE "DUAL_USE" AND item_category MUST NOT BE "TECHNOLOGY"
+  }
+
+  // 2) Military Export Control: Requires valid license AND end-user verification
+  // Conflict Fix: Added 'NOT EMBARGOED' to isolate from Rule 1
+  STATE_CONSTRAINT military_export_gate {
+    WHEN item_category == "MILITARY" AND destination_risk != "EMBARGOED"
+    THEN license_status == "VALID" AND end_user_verified == 1
+  }
+
+  // 3) Dual-Use Protocol: Mandatory end-user verification for non-embargoed regions
+  STATE_CONSTRAINT dual_use_verification_gate {
+    WHEN item_category == "DUAL_USE" AND destination_risk != "EMBARGOED"
+    THEN end_user_verified == 1
+  }
+
+  // 4) High-Value Threshold: Shipments >500k require a valid, non-expired license
+  STATE_CONSTRAINT high_value_license_gate {
+    WHEN value_usd > 500000
+    THEN license_status == "VALID"
+  }
+
+  // 5) Adversarial Tech Block: Restrictions on technology flow to high-risk origins
+  STATE_CONSTRAINT adversary_tech_protection {
+    WHEN item_category == "TECHNOLOGY" AND origin == "ADVERSARY"
+    THEN destination_risk MUST NOT BE "HIGH"
+  }
+
+  // 6) Pharmaceutical Compliance: Healthcare items always require active licensing
+  STATE_CONSTRAINT pharmaceutical_regulatory_gate {
+    WHEN item_category == "PHARMACEUTICAL"
+    THEN license_status == "VALID"
+  }
+
+  // 7) Maximum Risk Protocol: Ultra high-value shipments to high-risk regions
+  STATE_CONSTRAINT high_risk_tier_check {
+    WHEN value_usd > 1000000 AND destination_risk == "HIGH"
+    THEN end_user_verified == 1 AND license_status == "VALID"
+  }
+}

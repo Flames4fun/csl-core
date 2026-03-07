@@ -1,0 +1,66 @@
+// =============================================================
+// CSL-Core: EU AI Act Compliance Checker (v1.0.1)
+// Goal: Conflict-free risk classification and compliance logic
+// =============================================================
+
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  CHECK_LOGICAL_CONSISTENCY: TRUE
+  ENABLE_FORMAL_VERIFICATION: TRUE
+}
+
+DOMAIN EUAIActCompliance {
+  VARIABLES {
+    risk_class: {"MINIMAL", "LIMITED", "HIGH", "UNACCEPTABLE"}
+    has_documentation: 0..1
+    has_human_oversight: 0..1
+    transparency_score: 0..100
+    bias_audit_done: 0..1
+    deployment_region: {"EU", "NON_EU", "GLOBAL"}
+    data_governance: 0..1
+    system_type: {"CHATBOT", "BIOMETRIC", "RECRUITMENT", "CREDIT_SCORING", "MEDICAL", "AUTONOMOUS", "GENERAL"}
+  }
+
+  // 1) Absolute Prohibition: Unacceptable risk systems are banned from EU and Global markets
+  STATE_CONSTRAINT unacceptable_risk_ban {
+    WHEN risk_class == "UNACCEPTABLE"
+    THEN deployment_region MUST NOT BE "EU" AND deployment_region MUST NOT BE "GLOBAL"
+  }
+
+  // 2) High-Risk EU Requirements: Documentation, Oversight, Bias Audits, and Data Governance
+  // Note: Only applied if NOT unacceptable to prevent logical overlap
+  STATE_CONSTRAINT high_risk_eu_safeguards {
+    WHEN risk_class == "HIGH" AND deployment_region == "EU"
+    THEN has_documentation == 1 AND has_human_oversight == 1 AND bias_audit_done == 1 AND data_governance == 1
+  }
+
+  // 3) High-Risk Global Reach: Global deployments of high-risk systems must meet EU standards
+  STATE_CONSTRAINT high_risk_global_safeguards {
+    WHEN risk_class == "HIGH" AND deployment_region == "GLOBAL"
+    THEN has_documentation == 1 AND has_human_oversight == 1
+  }
+
+  // 4) Biometric Governance: Human oversight is mandatory for EU biometric systems (unless banned)
+  STATE_CONSTRAINT biometric_oversight_gate {
+    WHEN system_type == "BIOMETRIC" AND deployment_region == "EU" AND risk_class != "UNACCEPTABLE"
+    THEN has_human_oversight == 1
+  }
+
+  // 5) Transparency Threshold: Limited risk systems require explicit transparency scores
+  STATE_CONSTRAINT limited_risk_transparency {
+    WHEN risk_class == "LIMITED" AND deployment_region == "EU"
+    THEN transparency_score >= 60
+  }
+
+  // 6) AI Disclosure: Chatbots in the EU must meet transparency requirements
+  STATE_CONSTRAINT chatbot_disclosure_gate {
+    WHEN system_type == "CHATBOT" AND deployment_region == "EU" AND risk_class != "UNACCEPTABLE"
+    THEN transparency_score >= 50
+  }
+
+  // 7) Bias Audit Enforcement: Critical sectors mandate bias audits
+  STATE_CONSTRAINT critical_sector_bias_audit {
+    WHEN (system_type == "CREDIT_SCORING" OR system_type == "RECRUITMENT")
+    THEN bias_audit_done == 1
+  }
+}

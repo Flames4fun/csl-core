@@ -1,0 +1,63 @@
+// =============================================================
+// CSL-Core: AI Agent Safety Controller (v1.0.2)
+// Goal: Balanced safety with explicit allowed states
+// =============================================================
+
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  CHECK_LOGICAL_CONSISTENCY: TRUE
+}
+
+DOMAIN AIAgentSafety {
+  VARIABLES {
+    tool: {"WEB_SEARCH", "CODE_EXEC", "FILE_WRITE", "FILE_DELETE", "EMAIL_SEND", "DB_QUERY", "API_CALL", "SHELL_CMD"}
+    confidence: 0..100
+    user_approved: 0..1
+    scope: {"SANDBOX", "STAGING", "PRODUCTION"}
+    data_class: {"PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"}
+    action_cost: 0..10000
+    reversible: 0..1
+  }
+
+  // 1) Production Hygiene: Hard-block shell in prod regardless of approval
+  STATE_CONSTRAINT production_shell_ban {
+    WHEN scope == "PRODUCTION" AND tool == "SHELL_CMD"
+    THEN tool MUST NOT BE "SHELL_CMD"
+  }
+
+  // 2) Human-in-the-loop: Destructive tools ALWAYS need approval
+  STATE_CONSTRAINT deletion_safety {
+    WHEN tool == "FILE_DELETE" AND user_approved == 0
+    THEN tool MUST NOT BE "FILE_DELETE"
+  }
+
+  // 3) Confidence Gate: Low confidence communication requires human review
+  STATE_CONSTRAINT confidence_communication_gate {
+    WHEN confidence < 70 AND tool == "EMAIL_SEND" AND user_approved == 0
+    THEN tool MUST NOT BE "EMAIL_SEND"
+  }
+
+  // 4) Data Privacy: High-risk data classes need approval for external tools
+  STATE_CONSTRAINT data_privacy_gate {
+    WHEN (data_class == "RESTRICTED" OR data_class == "CONFIDENTIAL") AND user_approved == 0
+    THEN tool MUST NOT BE "EMAIL_SEND" AND tool MUST NOT BE "API_CALL"
+  }
+
+  // 5) Economic Safety: Expensive operations (>1000) need approval
+  STATE_CONSTRAINT budget_guard {
+    WHEN action_cost > 1000 AND user_approved == 0
+    THEN tool MUST NOT BE "API_CALL" AND tool MUST NOT BE "CODE_EXEC"
+  }
+
+  // 6) Risk Management: Irreversible actions with low confidence are forbidden without approval
+  STATE_CONSTRAINT irreversibility_guard {
+    WHEN reversible == 0 AND confidence < 90 AND user_approved == 0
+    THEN tool MUST NOT BE "FILE_DELETE" AND tool MUST NOT BE "EMAIL_SEND"
+  }
+
+  // 7) Production Code Execution: Needs explicit approval
+  STATE_CONSTRAINT prod_code_exec_gate {
+    WHEN scope == "PRODUCTION" AND tool == "CODE_EXEC" AND user_approved == 0
+    THEN tool MUST NOT BE "CODE_EXEC"
+  }
+}

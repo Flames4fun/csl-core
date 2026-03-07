@@ -1,0 +1,71 @@
+// =============================================================
+// CSL-Core: Healthcare Data Access Control
+// Goal: HIPAA-compliant access policy with Z3-optimized logic
+// =============================================================
+
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  CHECK_LOGICAL_CONSISTENCY: TRUE
+  ENABLE_FORMAL_VERIFICATION: FALSE
+}
+
+DOMAIN HealthcareDataGuard {
+  VARIABLES {
+    accessor_role: {"DOCTOR", "NURSE", "ADMIN", "RESEARCHER", "PATIENT", "BILLING"}
+    data_type: {"DIAGNOSIS", "MEDICATION", "BILLING_INFO", "GENETIC", "MENTAL_HEALTH", "VITALS", "LAB_RESULTS"}
+    operation: {"READ", "WRITE", "DELETE", "EXPORT", "SHARE"}
+    patient_consent: 0..1
+    is_treating: 0..1
+    urgency: {"NORMAL", "URGENT", "EMERGENCY"}
+  }
+
+  // 1) Hard Limit: Medical records are strictly immutable
+  STATE_CONSTRAINT no_deletion_allowed {
+    ALWAYS True
+    THEN operation MUST NOT BE "DELETE"
+  }
+
+  // 2) Genetic Privacy: Consent is mandatory for access/export
+  // Conflict Fix: Combined reading and exporting to prevent core overlap
+  STATE_CONSTRAINT genetic_consent_gate {
+    WHEN data_type == "GENETIC" AND patient_consent == 0
+    THEN operation MUST NOT BE "READ" AND operation MUST NOT BE "EXPORT"
+  }
+
+  // 3) Clinical Context: Nurses must be in a treating relationship for Mental Health
+  STATE_CONSTRAINT nurse_mental_health_treating_only {
+    WHEN data_type == "MENTAL_HEALTH" AND accessor_role == "NURSE" AND is_treating == 0
+    THEN operation MUST NOT BE "READ"
+  }
+
+  // 4) Researcher Sandbox: No access to Mental Health or writing/sharing operations
+  STATE_CONSTRAINT researcher_scope_limit {
+    WHEN accessor_role == "RESEARCHER"
+    THEN (data_type MUST NOT BE "MENTAL_HEALTH") AND (operation MUST NOT BE "WRITE") AND (operation MUST NOT BE "SHARE")
+  }
+
+  // 5) Billing Isolation: Billing staff restricted to financial data only
+  // Conflict Fix: Instead of MUST BE, we use MUST NOT BE for other data types
+  STATE_CONSTRAINT billing_staff_isolation {
+    WHEN accessor_role == "BILLING" AND data_type != "BILLING_INFO"
+    THEN operation MUST NOT BE "READ"
+  }
+
+  // 6) Emergency Override: Export without consent only allowed in Emergency
+  STATE_CONSTRAINT export_emergency_protocol {
+    WHEN operation == "EXPORT" AND patient_consent == 0 AND urgency != "EMERGENCY"
+    THEN operation MUST NOT BE "EXPORT"
+  }
+
+  // 7) Patient Access Control: Patients cannot modify records
+  STATE_CONSTRAINT patient_action_limit {
+    WHEN accessor_role == "PATIENT"
+    THEN operation MUST NOT BE "WRITE" AND operation MUST NOT BE "SHARE"
+  }
+
+  // 8) Global Share Safety: Sharing without consent restricted to Emergencies
+  STATE_CONSTRAINT share_emergency_protocol {
+    WHEN operation == "SHARE" AND patient_consent == 0 AND urgency != "EMERGENCY"
+    THEN operation MUST NOT BE "SHARE"
+  }
+}
