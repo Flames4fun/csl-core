@@ -5,6 +5,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/csl-core.svg)](https://pypi.org/project/csl-core/)
 [![License](https://img.shields.io/pypi/l/csl-core.svg)](LICENSE)
 [![Z3 Verified](https://img.shields.io/badge/Z3-Formally%20Verified-purple.svg)](https://github.com/Z3Prover/z3)
+[![TLA+ Verified](https://img.shields.io/badge/TLA%E2%81%BA-Model%20Checked-brightgreen.svg)](https://github.com/tlaplus/tlaplus)
 
 ## ❤️ Our Contributors!
 
@@ -204,6 +205,60 @@ cslcore> {"action": "DELETE", "user_level": 5}
 ✅ ALLOWED
 ```
 
+### `formal` — TLA⁺ Model Checking
+
+```bash
+cslcore formal my_policy.csl
+```
+
+Runs the official TLC model checker (`java -jar tla2tools.jar`) against your policy. TLC exhaustively explores every reachable state in the abstract state space and proves each temporal property holds — or returns a concrete counterexample trace with the exact state that breaks your invariant.
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       TLA⁺ FORMAL VERIFICATION ENGINE                        ║
+║          Chimera Specification Language · Temporal Logic of Actions          ║
+║                                                                              ║
+║    ⚡  REAL TLC  ·  java -jar tla2tools.jar  ·  Exhaustive Model Checking    ║
+║       TLC2 Version 2026.03.31.154134 (rev: becec35)  ·  pid 48146  ·  1      ║
+║                                  worker(s)                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Variable      Domain                         Cardinality
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  agent_tier    {"STANDARD", "PREMIUM"}                |2|
+  task_type     {"READ", "WRITE", "ANALYZE"}           |3|
+  risk_score    0..5                                   |6|
+
+  ├─ □(no_destructive_ops)      ✅  HOLDS  [288 states  349ms]
+  ├─ □(no_production_access)    ✅  HOLDS  [288 states  349ms]
+  ├─ □(bounded_risk)            ✅  HOLDS  [288 states  349ms]
+
+  └─ Proof hash: 17dd1564897d242fc045a3a884a52bbb… ✅
+
+╔══════════════ TLA⁺ VERIFICATION COMPLETE — ALL PROPERTIES HOLD ══════════════╗
+║  ✅  Domain: AIAgentSafetyDemo  ·  ⬡ 144 states  ·  ⏱ 1047ms               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+Enable in any policy by adding one line to `CONFIG`:
+
+```js
+CONFIG {
+  ENFORCEMENT_MODE: BLOCK
+  ENABLE_FORMAL_VERIFICATION: TRUE   // ← triggers cslcore formal automatically
+}
+```
+
+Or run standalone:
+
+```bash
+cslcore formal policy.csl              # real TLC (Java required, JAR auto-downloaded)
+cslcore formal policy.csl --mock       # Python BFS fallback (no Java needed)
+cslcore formal policy.csl --timeout 120
+```
+
+> **No Java?** CSL-Core falls back to a Python BFS model checker automatically. The banner clearly labels which engine ran. JAR is auto-downloaded on first use (~4MB from the official TLA+ GitHub release).
+
 ### CI/CD Pipeline
 
 ```yaml
@@ -257,11 +312,17 @@ Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_deskt
 │  1. COMPILER    .csl → AST → IR → Compiled Artifact      │
 │     Syntax validation, semantic checks, functor gen       │
 ├──────────────────────────────────────────────────────────┤
-│  2. VERIFIER    Z3 Theorem Prover — Static Analysis       │
+│  2. Z3 VERIFIER    Theorem Prover — Static Analysis       │
 │     Contradiction detection, reachability, rule shadowing │
 │     ⚠️ If verification fails → policy will NOT compile    │
 ├──────────────────────────────────────────────────────────┤
-│  3. RUNTIME     Deterministic Policy Enforcement          │
+│  3. TLA⁺ VERIFIER  Model Checker — Temporal Safety        │
+│     Exhaustive state-space exploration via TLC            │
+│     Predicate abstraction for large numeric domains       │
+│     Counterexample traces + automated fix suggestions     │
+│     (opt-in: ENABLE_FORMAL_VERIFICATION: TRUE)            │
+├──────────────────────────────────────────────────────────┤
+│  4. RUNTIME     Deterministic Policy Enforcement          │
 │     Fail-closed, zero dependencies, <1ms latency          │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -295,6 +356,8 @@ Heavy computation happens once at compile-time. Runtime is pure evaluation.
 | [`agent_tool_guard.csl`](examples/agent_tool_guard.csl) | AI Safety | RBAC, PII protection, tool permissions |
 | [`chimera_banking_case_study.csl`](examples/chimera_banking_case_study.csl) | Finance | Risk scoring, VIP tiers, sanctions |
 | [`dao_treasury_guard.csl`](examples/dao_treasury_guard.csl) | Web3 | Multi-sig, timelocks, emergency bypass |
+| [`tla_demo.csl`](examples/tla_demo.csl) | Formal Methods | TLA⁺ model checking — all properties hold |
+| [`tla_demo_violation.csl`](examples/tla_demo_violation.csl) | Formal Methods | TLA⁺ counterexample trace + fix suggestions |
 
 ```bash
 python examples/run_examples.py          # Run all with test suites
@@ -330,13 +393,13 @@ Full docs: [**Getting Started**](docs/getting-started.md) · [**Syntax Spec**](d
 
 ## Roadmap
 
-**✅ Done:** Core language & parser · Z3 verification · Fail-closed runtime · LangChain integration · CLI (verify, simulate, repl) · MCP Server · Production deployment in Chimera v1.7.0
+**✅ Done:** Core language & parser · Z3 verification · Fail-closed runtime · LangChain integration · CLI (verify, simulate, repl, formal) · MCP Server · TLA⁺ model checking with real TLC · Predicate abstraction · Counterexample analysis · Production deployment in Chimera v1.7.0
 
 **🚧 In Progress:** Policy versioning · LangGraph integration
 
 **🔮 Planned:** LlamaIndex & AutoGen · Multi-policy composition · Hot-reload · Policy marketplace · Cloud templates
 
-**🔒 Enterprise (Research):** TLA+ temporal logic · Causal inference · Multi-tenancy
+**🔒 Enterprise (Research):** Causal inference · Multi-tenancy
 
 ---
 

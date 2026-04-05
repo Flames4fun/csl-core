@@ -26,6 +26,7 @@ from .ast import (
 from .validator import CSLValidator, ValidationError
 from chimera_core.engines.z3_engine import LogicVerifier
 from chimera_core.engines.z3_engine import SuggestionEngine
+from chimera_core.engines.tla_engine import TLAVerifier
 
 
 # ============================================================================
@@ -252,15 +253,24 @@ class CSLCompiler:
 
         # CHECK 1: TLA+ Formal Verification
         if constitution.config.enable_formal_verification:
-            print("\n" + "="*60)
-            print("🔒 ENTERPRISE FEATURE LOCKED: TLA+ Formal Verification")
-            print("-" * 60)
-            print("You have enabled 'enable_formal_verification: true'.")
-            print("This requires the CSL Enterprise Engine (Java/TLC Model Checker).")
-            print("CSL Core uses Z3 (check_logical_consistency) for logic checks.")
-            print("\n👉 To fix: Set 'enable_formal_verification: false' in your CSL config.")
-            print("="*60 + "\n")
-            raise CompilationError("Enterprise Feature Requested: Formal Verification")
+            print("   ├── Running TLA⁺ Model Checker (Temporal Logic of Actions)…")
+            tla_verifier = TLAVerifier(animate=True)
+            is_valid, issues = tla_verifier.verify(constitution)
+            if not is_valid:
+                print("\n❌ [CRITICAL] TLA⁺ FORMAL VERIFICATION FAILED!")
+                for issue in issues:
+                    print(f"   • [{issue.kind}] {issue.constraint}: {issue.message}")
+                    if issue.counterexample:
+                        for i, s in enumerate(issue.counterexample[:3]):
+                            # Normalize MCState or dict for display
+                            s_vars = s.variables if hasattr(s, "variables") else (s if isinstance(s, dict) else {})
+                            print(f"     State {i}: {s_vars}")
+                raise CompilationError(
+                    f"TLA⁺ formal verification failed: "
+                    f"{len(issues)} property violation(s) found."
+                )
+            else:
+                print("   └── ✅ TLA⁺ Verification passed — all temporal properties hold")
 
         # CHECK 2: Causal Inference
         if constitution.config.enable_causal_inference:

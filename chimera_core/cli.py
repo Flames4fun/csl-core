@@ -236,6 +236,112 @@ def _compile_policy(policy_path: str, *, skip_verify: bool, skip_validate: bool,
     return compiled
 
 
+def cmd_formal(args: argparse.Namespace) -> int:
+    """
+    cslcore formal <policy.csl>
+
+    Runs the TLA+ formal verification engine directly on a CSL policy,
+    bypassing Z3 and showing the full epic terminal animation.
+
+    Flags:
+      --mock          Force Python BFS engine even if TLC is available
+      --timeout N     TLC subprocess timeout in seconds (default: 60)
+      --no-download   Do not auto-download tla2tools.jar
+    """
+    from .engines.tla_engine import TLAVerifier
+    from .engines.tla_engine.tlc_runner import java_available, find_jar
+    from rich.rule import Rule
+    from rich.text import Text
+
+    policy = args.policy
+    use_real = not args.mock
+    timeout  = args.timeout
+    no_dl    = args.no_download
+
+    _print_banner()
+    console.print(Panel(
+        f"[bold]TLA⁺ Formal Verification[/bold]\n[cyan]{policy}[/cyan]",
+        border_style="bright_cyan",
+        width=92,
+    ))
+    console.print()
+
+    # ── Parse ────────────────────────────────────────────────────────────────
+    try:
+        constitution = parse_csl_file(policy)
+    except Exception as e:
+        _print_error("Parse failed", _safe_to_str(e, 2000))
+        return 2
+
+    if not constitution.constraints:
+        _print_error("Nothing to verify", "Policy has no constraints — add STATE_CONSTRAINT blocks.")
+        return 2
+
+    # ── Engine availability info ──────────────────────────────────────────────
+    if use_real:
+        java_ok = java_available()
+        jar_ok  = find_jar() is not None
+        if java_ok and jar_ok:
+            console.print(Text(
+                "  ⚡  Engine: REAL TLC (java -jar tla2tools.jar) — mathematically rigorous",
+                style="bold bright_green",
+            ))
+        elif not java_ok:
+            console.print(Text(
+                "  ⚠   Java not found on PATH — falling back to Python BFS engine",
+                style="bold yellow",
+            ))
+        elif not jar_ok and no_dl:
+            console.print(Text(
+                "  ⚠   tla2tools.jar not found and --no-download set — falling back to Python BFS",
+                style="bold yellow",
+            ))
+        else:
+            console.print(Text(
+                "  ⬇   tla2tools.jar not cached — will auto-download (~20 MB) on first run",
+                style="bold cyan",
+            ))
+    else:
+        console.print(Text(
+            "  ⚙   Engine: Python BFS Mock (--mock flag set)",
+            style="bold yellow",
+        ))
+    console.print()
+
+    # ── Run verifier ─────────────────────────────────────────────────────────
+    verifier = TLAVerifier(
+        animate=True,
+        use_real_tlc=use_real,
+        tlc_timeout=timeout,
+        tlc_auto_download=not no_dl,
+    )
+
+    try:
+        ok, issues = verifier.verify(constitution)
+    except Exception as e:
+        _print_error("Formal verification crashed", _safe_to_str(e, 2000))
+        return 3
+
+    # ── Result ────────────────────────────────────────────────────────────────
+    console.print()
+    if ok:
+        _print_success(
+            "All temporal properties hold",
+            f"□(P) verified for all {len(constitution.constraints)} constraint(s) — "
+            "no reachable counterexample found.",
+        )
+        _print_star_footer()
+        return 0
+    else:
+        vnames = ", ".join(i.constraint for i in issues)
+        _print_error(
+            f"Formal verification failed — {len(issues)} violation(s)",
+            f"Violated constraints: {vnames}\n"
+            "Fix the issues shown above and re-run.",
+        )
+        return 2
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     _print_banner()
     policy = args.policy
@@ -543,6 +649,31 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--json-out", help="Append JSONL output to a file (one line per simulation).")
     s.add_argument("--quiet", action="store_true", help="Reduce human output (useful with --json).")
     s.set_defaults(func=cmd_simulate)
+
+    # formal
+    f = sub.add_parser(
+        "formal",
+        help="Run TLA⁺ formal verification with full terminal animations",
+    )
+    f.add_argument("policy", help="Path to .csl policy file")
+    f.add_argument(
+        "--mock",
+        action="store_true",
+        help="Force Python BFS engine even if TLC (tla2tools.jar) is available",
+    )
+    f.add_argument(
+        "--timeout",
+        type=int,
+        default=60,
+        metavar="N",
+        help="TLC subprocess timeout in seconds (default: 60)",
+    )
+    f.add_argument(
+        "--no-download",
+        action="store_true",
+        help="Do not auto-download tla2tools.jar if missing",
+    )
+    f.set_defaults(func=cmd_formal)
 
     # repl
     r = sub.add_parser("repl", help="Interactive REPL for rapid policy testing (JSON lines)")
